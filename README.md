@@ -1,8 +1,13 @@
-# GIVIT Backend
+# GIVIT
 
-GIVIT is a community marketplace API. People can list unused items to **give away**, **trade**, or **sell cheaply**.
+Community marketplace — **give away**, **trade**, or **sell cheaply**.
 
-This folder is the **backend only** (no website UI yet). The frontend will talk to this API later.
+| Part | Folder | Branch (Git) |
+|------|--------|----------------|
+| Backend (Django API) | project root | `main` |
+| Frontend (React) | `frontend/` | `frontend` |
+
+See **`frontend/README.md`** to run the React app.
 
 ---
 
@@ -214,11 +219,27 @@ core/                Shared helpers (pagination, permissions)
 
 ---
 
+## Frontend (React)
+
+```powershell
+# Terminal 1 — API
+python manage.py runserver
+
+# Terminal 2 — React
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173 — see **`frontend/README.md`**.
+
+Push frontend work: `git push -u origin frontend`
+
 ## What’s next
 
-1. Test the full flow in Swagger (register → login → post item → request item).
-2. Build the React frontend pointing at `http://127.0.0.1:8000/api/v1/`.
-3. Switch to PostgreSQL and Cloudinary when you deploy.
+1. Test Swagger + React (register → browse → post item).
+2. Deploy backend (`main`) and frontend (`frontend` branch) separately.
+3. PostgreSQL + Cloudinary when you go to production.
 
 ---
 
