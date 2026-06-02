@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../api/client'
+import { getResults } from '../api/errors'
 import ItemCard from '../components/ItemCard'
 
 export default function MyItems() {
@@ -9,7 +11,7 @@ export default function MyItems() {
   useEffect(() => {
     api
       .get('items/my/')
-      .then((res) => setItems(res.data.results || res.data))
+      .then((res) => setItems(getResults(res.data)))
       .finally(() => setLoading(false))
   }, [])
 
@@ -21,9 +23,14 @@ export default function MyItems() {
       ) : items.length === 0 ? (
         <p>You have not posted any items yet.</p>
       ) : (
-        <div className="item-grid">
+        <div className="item-grid my-items-grid">
           {items.map((item) => (
-            <ItemCard key={item.id} item={item} />
+            <div key={item.id} className="my-item-wrap">
+              <ItemCard item={item} />
+              <Link to={`/items/${item.id}/edit`} className="btn btn-ghost btn-sm">
+                Edit listing
+              </Link>
+            </div>
           ))}
         </div>
       )}

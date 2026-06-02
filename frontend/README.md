@@ -28,7 +28,11 @@ Copy `.env.example` to `.env`:
 
 ```env
 VITE_API_URL=http://127.0.0.1:8000/api/v1
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
+
+- `VITE_GA_MEASUREMENT_ID` is optional. Leave it empty to disable Google Analytics.
+- Get the ID from [Google Analytics](https://analytics.google.com/) → Admin → Data streams → your web stream → **Measurement ID**.
 
 Backend must allow CORS for `http://localhost:5173` (already in root `.env`).
 

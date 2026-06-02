@@ -1,95 +1,85 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import api from '../api/client'
 import { parseApiError } from '../api/errors'
-import { useAuth } from '../context/AuthContext'
 
-export default function PostItem() {
+export default function EditItem() {
+  const { id } = useParams()
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [categories, setCategories] = useState([])
-  const [images, setImages] = useState([])
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    category: '',
-    condition: 'good',
-    location: '',
-    contact: '',
-    listing_type: 'free',
-    price: '',
-  })
+  const [form, setForm] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    api.get('items/categories/').then((res) => setCategories(res.data))
-  }, [])
-
-  useEffect(() => {
-    if (!user) return
-    setForm((prev) => ({
-      ...prev,
-      contact: prev.contact || user.phone || '',
-      location: prev.location || user.location || '',
-    }))
-  }, [user])
+    Promise.all([
+      api.get('items/categories/'),
+      api.get(`items/${id}/`),
+    ]).then(([catRes, itemRes]) => {
+      setCategories(catRes.data)
+      const item = itemRes.data
+      setForm({
+        title: item.title,
+        description: item.description,
+        category: String(item.category),
+        condition: item.condition,
+        location: item.location,
+        contact: item.contact || '',
+        listing_type: item.listing_type,
+        price: item.price ?? '',
+      })
+    })
+  }, [id])
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleImages = (e) => {
-    setImages(Array.from(e.target.files || []))
-  }
-
-  const uploadImages = async (itemId) => {
-    for (let i = 0; i < images.length; i++) {
-      const fd = new FormData()
-      fd.append('image', images[i])
-      fd.append('is_primary', i === 0 ? 'true' : 'false')
-      await api.post(`items/${itemId}/images/`, fd)
-    }
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
     setLoading(true)
+    setError('')
     const payload = { ...form, category: Number(form.category) }
     if (form.listing_type !== 'sale') delete payload.price
     else payload.price = form.price
-
     try {
-      const { data } = await api.post('items/', payload)
-      if (images.length > 0) {
-        await uploadImages(data.id)
-      }
-      navigate(`/items/${data.id}`)
+      await api.patch(`items/${id}/`, payload)
+      navigate(`/items/${id}`)
     } catch (err) {
-      setError(parseApiError(err, 'Could not create item.'))
+      setError(parseApiError(err))
     } finally {
       setLoading(false)
     }
   }
 
+  const handleDelete = async () => {
+    if (!window.confirm('Delete this listing permanently?')) return
+    try {
+      await api.delete(`items/${id}/`)
+      navigate('/my-items')
+    } catch (err) {
+      alert(parseApiError(err))
+    }
+  }
+
+  if (!form) return <p className="loading">Loading…</p>
+
   return (
     <div className="form-page">
-      <h1>Post an item</h1>
-      <form onSubmit={handleSubmit} className="form-grid">
+      <h1>Edit item</h1>
+      <form onSubmit={handleSubmit}>
         {error && <p className="error">{error}</p>}
         <label>
           Title
           <input name="title" value={form.title} onChange={handleChange} required />
         </label>
-        <label className="full">
+        <label>
           Description
           <textarea name="description" value={form.description} onChange={handleChange} required />
         </label>
         <label>
           Category
-          <select name="category" value={form.category} onChange={handleChange} required>
-            <option value="">Select…</option>
+          <select name="category" value={form.category} onChange={handleChange}>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -110,17 +100,15 @@ export default function PostItem() {
           Location
           <input name="location" value={form.location} onChange={handleChange} required />
         </label>
-        <label className="full">
+        <label>
           Contact
           <input
             name="contact"
-            type="text"
             value={form.contact}
             onChange={handleChange}
-            placeholder="Phone or email so people can reach you"
+            placeholder="Phone or email"
             required
           />
-          <span className="hint">Shown on your listing so others can coordinate pickup.</span>
         </label>
         <label>
           Listing type
@@ -133,20 +121,16 @@ export default function PostItem() {
         {form.listing_type === 'sale' && (
           <label>
             Price
-            <input name="price" type="number" step="0.01" value={form.price} onChange={handleChange} required />
+            <input name="price" type="number" step="0.01" value={form.price} onChange={handleChange} />
           </label>
         )}
-        <label className="full">
-          Photos (optional)
-          <input type="file" accept="image/*" multiple onChange={handleImages} />
-          {images.length > 0 && (
-            <span className="hint">{images.length} file(s) selected. First image is the cover.</span>
-          )}
-        </label>
         <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? 'Posting…' : 'Post item'}
+          {loading ? 'Saving…' : 'Save changes'}
         </button>
       </form>
+      <button type="button" className="btn btn-danger" style={{ marginTop: '1rem' }} onClick={handleDelete}>
+        Delete listing
+      </button>
     </div>
   )
 }

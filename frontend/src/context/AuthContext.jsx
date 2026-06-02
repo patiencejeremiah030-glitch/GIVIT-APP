@@ -34,8 +34,22 @@ export function AuthProvider({ children }) {
   }
 
   const register = async (form) => {
-    await api.post('users/register/', form)
-    return login(form.email, form.password)
+    const payload = {
+      ...form,
+      email: form.email.trim().toLowerCase(),
+      username: form.username.trim(),
+    }
+    const { data } = await api.post('users/register/', payload)
+    localStorage.setItem('access_token', data.access)
+    localStorage.setItem('refresh_token', data.refresh)
+    setUser(data.user)
+    return data
+  }
+
+  const refreshUser = async () => {
+    const { data } = await api.get('users/me/')
+    setUser(data)
+    return data
   }
 
   const logout = async () => {
@@ -52,7 +66,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isAuthenticated, login, register, logout }}
+      value={{ user, loading, isAuthenticated, login, register, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

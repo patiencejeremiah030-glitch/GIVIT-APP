@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { parseApiError } from '../api/errors'
 
 export default function Register() {
   const { register } = useAuth()
@@ -27,12 +28,7 @@ export default function Register() {
       await register(form)
       navigate('/dashboard')
     } catch (err) {
-      const errors = err.response?.data?.errors || err.response?.data
-      setError(
-        typeof errors === 'string'
-          ? errors
-          : JSON.stringify(errors) || 'Registration failed.',
-      )
+      setError(parseApiError(err, 'Registration failed.'))
     } finally {
       setLoading(false)
     }
@@ -62,8 +58,12 @@ export default function Register() {
             type="password"
             value={form.password}
             onChange={handleChange}
+            minLength={8}
             required
           />
+          <span className="hint">
+            At least 8 characters; avoid common words like &quot;password&quot;.
+          </span>
         </label>
         <label>
           Confirm password
