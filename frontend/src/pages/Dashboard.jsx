@@ -31,7 +31,6 @@ export default function Dashboard() {
       >
         Welcome back, {data.user.username}
       </motion.h1>
-      <p className="subtitle">{data.user.email}</p>
 
       <div className="stats-grid">
         <motion.div

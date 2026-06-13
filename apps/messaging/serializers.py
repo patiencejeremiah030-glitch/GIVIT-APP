@@ -30,6 +30,8 @@ class ConversationSerializer(serializers.ModelSerializer):
         many=True, read_only=True
     )
     participant_usernames = serializers.SerializerMethodField()
+    other_participant = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     item_title = serializers.CharField(source="item.title", read_only=True)
 
@@ -39,6 +41,8 @@ class ConversationSerializer(serializers.ModelSerializer):
             "id",
             "participants",
             "participant_usernames",
+            "other_participant",
+            "unread_count",
             "item",
             "item_title",
             "last_message",
@@ -49,6 +53,32 @@ class ConversationSerializer(serializers.ModelSerializer):
 
     def get_participant_usernames(self, obj):
         return list(obj.participants.values_list("username", flat=True))
+
+    def get_other_participant(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        other = obj.participants.exclude(pk=request.user.pk).first()
+        if not other:
+            return None
+        avatar = other.avatar.url if other.avatar else None
+        if avatar and request:
+            avatar = request.build_absolute_uri(avatar)
+        return {
+            "id": other.id,
+            "username": other.username,
+            "avatar": avatar,
+        }
+
+    def get_unread_count(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return 0
+        return (
+            obj.messages.filter(is_read=False)
+            .exclude(sender=request.user)
+            .count()
+        )
 
     def get_last_message(self, obj):
         msg = obj.messages.order_by("-created_at").first()

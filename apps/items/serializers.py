@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Item, ItemImage
+from .models import Category, Favorite, Item, ItemImage
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -22,6 +22,7 @@ class ItemListSerializer(serializers.ModelSerializer):
     owner_name = serializers.CharField(source="owner.username", read_only=True)
     owner_id = serializers.IntegerField(source="owner.id", read_only=True)
     primary_image = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
         model = Item
@@ -39,8 +40,17 @@ class ItemListSerializer(serializers.ModelSerializer):
             "owner_id",
             "owner_name",
             "primary_image",
+            "is_favorited",
             "created_at",
         )
+
+    def get_is_favorited(self, obj):
+        if hasattr(obj, "is_favorited"):
+            return bool(obj.is_favorited)
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return Favorite.objects.filter(user=request.user, item=obj).exists()
 
     def get_primary_image(self, obj):
         img = obj.images.filter(is_primary=True).first() or obj.images.first()
@@ -58,6 +68,7 @@ class ItemDetailSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     owner_username = serializers.CharField(source="owner.username", read_only=True)
     owner_id = serializers.IntegerField(source="owner.id", read_only=True)
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
         model = Item
@@ -75,10 +86,19 @@ class ItemDetailSerializer(serializers.ModelSerializer):
             "price",
             "status",
             "images",
+            "is_favorited",
             "created_at",
             "updated_at",
         )
         read_only_fields = ("owner_id", "owner_username", "status", "created_at", "updated_at")
+
+    def get_is_favorited(self, obj):
+        if hasattr(obj, "is_favorited"):
+            return bool(obj.is_favorited)
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return Favorite.objects.filter(user=request.user, item=obj).exists()
 
     def validate(self, attrs):
         listing_type = attrs.get(

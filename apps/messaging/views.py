@@ -57,7 +57,7 @@ class StartConversationView(APIView):
             conversation.save(update_fields=["updated_at"])
 
         return Response(
-            ConversationSerializer(conversation).data,
+            ConversationSerializer(conversation, context={"request": request}).data,
             status=status.HTTP_201_CREATED if body else status.HTTP_200_OK,
         )
 

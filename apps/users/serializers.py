@@ -13,6 +13,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ("email", "username", "password", "password_confirm", "location")
 
+    def validate_email(self, value):
+        return value.strip().lower()
+
+    def validate_username(self, value):
+        return value.strip()
+
     def validate(self, attrs):
         if attrs["password"] != attrs["password_confirm"]:
             raise serializers.ValidationError(

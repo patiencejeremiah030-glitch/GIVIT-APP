@@ -18,6 +18,20 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "user": UserProfileSerializer(user).data,
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -27,10 +41,12 @@ class LoginView(APIView):
         password = request.data.get("password", "")
         user = authenticate(request, username=email, password=password)
         if user is None:
-            return Response(
-                {"detail": "Invalid email or password."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+            user = User.objects.filter(email__iexact=email).first()
+            if user is None or not user.check_password(password):
+                return Response(
+                    {"detail": "Invalid email or password."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
         refresh = RefreshToken.for_user(user)
         return Response(
             {
