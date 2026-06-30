@@ -1,6 +1,10 @@
 from .base import *  # noqa: F403
 
 DEBUG = False
+
+# PythonAnywhere / reverse-proxy HTTPS (required with SECURE_SSL_REDIRECT)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

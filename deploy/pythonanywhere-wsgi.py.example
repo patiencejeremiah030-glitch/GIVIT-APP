@@ -1,0 +1,15 @@
+# Paste into PythonAnywhere → Web → WSGI configuration file.
+# Replace YOUR_USERNAME and fix the project path if your folder name differs.
+
+import os
+import sys
+
+project_home = "/home/YOUR_USERNAME/GIVIT APP"
+if project_home not in sys.path:
+    sys.path.insert(0, project_home)
+
+os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings.production"
+
+from django.core.wsgi import get_wsgi_application
+
+application = get_wsgi_application()
