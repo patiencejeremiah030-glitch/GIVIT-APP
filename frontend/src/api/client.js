@@ -1,9 +1,15 @@
 import axios from 'axios'
 
-const API_URL = (import.meta.env.VITE_API_URL || '/api/v1').replace(
-  /\/$/,
-  '',
-)
+/** Normalize API base URL; fixes common /api/v typo (missing "1"). */
+function normalizeApiUrl(url) {
+  let base = (url || '/api/v1').trim().replace(/\/$/, '')
+  if (base.endsWith('/api/v')) {
+    base = `${base}1`
+  }
+  return base
+}
+
+const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL)
 const REFRESH_URL = `${API_URL}/auth/token/refresh/`
 
 const api = axios.create({
